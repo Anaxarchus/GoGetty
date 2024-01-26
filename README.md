@@ -15,10 +15,7 @@ git clone https://github.com/Anaxarchus/GoGetty.git
 cd GoGetty
 
 # Build the project (Assuming Go is installed)
-go build -o gogetty
-
-# Optionally, move the binary to a directory in your PATH
-sudo mv gogetty /usr/local/bin
+go build
 ```
 
 ## Installation
@@ -30,6 +27,7 @@ cd path/to/your/project
 ```
 
 If you would like to install GoGetty, then you can through the install command. The install command will copy GoGetty into the cache location at user/home/.gogetty, and add it to your system PATH.
+
 [ONLY IMPLEMENTED ON LINUX]
 ```bash
 ./gogetty install
