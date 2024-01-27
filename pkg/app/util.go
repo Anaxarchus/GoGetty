@@ -13,14 +13,22 @@ import (
 func fetchRecursive(projectDir string, modules []gitop.GitRepo) error {
 	err := project.Validate(projectDir)
 	if err != nil {
-		fmt.Printf("Validation failed: %v\n", err)
-		return err
+		if !os.IsNotExist(err) {
+			return err
+		} else {
+			return nil
+		}
+
 	}
 
 	proj, err := project.GetProjectFile(projectDir)
 	if err != nil {
-		fmt.Printf("Error getting project file: %v\n", err)
-		return err
+		if !os.IsNotExist(err) {
+			return err
+		} else {
+			return nil
+		}
+
 	}
 
 	var allErrors []error
@@ -71,4 +79,27 @@ func ensureDir(dirName string) error {
 		return os.MkdirAll(dirName, 0755)
 	}
 	return nil
+}
+
+func printDependency(dep project.Dependency) {
+	indent := "    "
+	if dep.Repository.Name != "" {
+		fmt.Println(indent+"Name:", dep.Repository.Name)
+	}
+	if dep.Repository.URL != "" {
+		fmt.Println(indent+"Url:", dep.Repository.URL)
+	}
+	if dep.Repository.Branch != "" {
+		fmt.Println(indent+"Branch:", dep.Repository.Branch)
+	}
+	if dep.Repository.Commit != "" {
+		fmt.Println(indent+"Commit:", dep.Repository.Commit)
+	}
+	if len(dep.Directories) > 0 {
+		fmt.Println(indent + "Directories:")
+		for _, dir := range dep.Directories {
+			fmt.Println(indent + indent + dir)
+		}
+	}
+	fmt.Println()
 }
