@@ -3,7 +3,7 @@ package install
 import (
 	"bufio"
 	"fmt"
-	"gogetty/pkg/gogetty"
+	"gogetty/pkg/cache"
 	"io"
 	"os"
 	"path/filepath"
@@ -55,7 +55,7 @@ func Install(executableName string) error {
 func Uninstall(executableName string) error {
 	unixBinPath := os.ExpandEnv(unixBin)
 	destPath := filepath.Join(unixBinPath, executableName)
-	cachePath := gogetty.GetCachePath()
+	cachePath := cache.CacheDir()
 
 	if err := os.Remove(destPath); err != nil {
 		return fmt.Errorf("failed to remove executable from cache: %w", err)

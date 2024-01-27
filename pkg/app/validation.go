@@ -1,9 +1,11 @@
-package gogetty
+package app
 
 import (
 	"fmt"
+	"gogetty/pkg/cache"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 func ValidateEnvironment() error {
@@ -17,7 +19,7 @@ func ValidateEnvironment() error {
 
 	// Check if the cache is initialized
 	if err := checkCacheInitialized(); err != nil {
-		err = InitCache()
+		err = cache.Init()
 		if err != nil {
 			fmt.Println("Error: Cache failed to initialize:", err)
 		}
@@ -32,9 +34,17 @@ func checkGitInstalled() error {
 }
 
 func checkCacheInitialized() error {
-	cachePath := GetCachePath(CacheJson)
+	cachePath := cache.CacheDir()
 	if _, err := os.Stat(cachePath); os.IsNotExist(err) {
 		return fmt.Errorf("cache is not initialized")
+	}
+	modulePath := cache.ModuleDir()
+	if _, err := os.Stat(modulePath); os.IsNotExist(err) {
+		return fmt.Errorf("module directory is not initialized")
+	}
+	clientPath := filepath.Join(cachePath, cache.ClientList)
+	if _, err := os.Stat(clientPath); os.IsNotExist(err) {
+		return fmt.Errorf("client list is not initialized")
 	}
 	return nil
 }

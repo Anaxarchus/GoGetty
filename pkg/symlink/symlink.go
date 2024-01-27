@@ -1,23 +1,14 @@
-package gogetty
+package symlink
 
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 )
 
-// createUnixLink handles symlink creation on Unix-like systems.
-func createUnixLink(source, target string) error {
-	return os.Symlink(source, target)
-}
+const symlinkWarning = `Welcome to your GoGetty-managed directory!
 
-// createWindowsLink handles symlink creation on Windows.
-func createWindowsLink(source, target string) error {
-	cmd := exec.Command("cmd", "/c", "mklink", "/J", target, source)
-	return cmd.Run()
-}
+Please note: This directory includes symlinks managed by GoGetty and may be modified automatically. It's recommended to avoid saving your personal project files directly in this directory to prevent any accidental data loss. Thanks for using GoGetty!`
 
 func CreateSymlink(source, target string) error {
 	// Resolve absolute paths
@@ -38,14 +29,10 @@ func CreateSymlink(source, target string) error {
 		}
 	}
 
-	if runtime.GOOS == "windows" {
-		return createWindowsLink(absSource, absTarget)
-	} else {
-		return createUnixLink(absSource, absTarget)
-	}
+	return os.Symlink(absSource, absTarget)
 }
 
-func CreateBatchSymlinks(sourceBase, targetBase string, subDirs []string) error {
+func CreateSymlinkBundle(sourceBase, targetBase string, subDirs []string) error {
 	// Determine the name of the new directory to be created at the target location
 	newDirName := filepath.Base(sourceBase)
 	newDirPath := filepath.Join(targetBase, newDirName)
@@ -68,17 +55,15 @@ func CreateBatchSymlinks(sourceBase, targetBase string, subDirs []string) error 
 	return nil
 }
 
-func RemoveBatchSymlinks(targetBase string) error {
-	// Determine the name of the directory to be removed
-	dirToRemove := filepath.Base(targetBase)
+func WriteReadmeWithWarning(targetBase string) error {
+	readmePath := filepath.Join(targetBase, "WARNING.md")
 
-	// Construct the full path of the directory
-	fullPath := filepath.Join(filepath.Dir(targetBase), dirToRemove)
-
-	// Remove the entire directory
-	if err := os.RemoveAll(fullPath); err != nil {
-		return fmt.Errorf("failed to remove directory '%s': %v", fullPath, err)
+	// Check if README already exists
+	if _, err := os.Stat(readmePath); err == nil {
+		// README exists, no need to rewrite
+		return nil
 	}
 
-	return nil
+	// Write the warning message to README
+	return os.WriteFile(readmePath, []byte(symlinkWarning), 0644)
 }
