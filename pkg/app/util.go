@@ -55,11 +55,8 @@ func fetchRecursive(projectDir string, modules []gitop.GitRepo) error {
 			continue
 		}
 		if len(dep.Directories) > 0 {
-			fmt.Println("creating symlink bundle from path: ", repo.Path)
-			fmt.Printf("creating symlink bundle from repo: %v", repo)
 			symlink.CreateSymlinkBundle(repo.Path, targetDir, dep.Directories)
 		} else {
-			fmt.Println("creating symlink from path: ", repo.Path)
 			symlink.CreateSymlink(repo.Path, targetDir)
 		}
 		new_dep := project.Dependency{
