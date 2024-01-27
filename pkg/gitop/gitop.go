@@ -19,11 +19,9 @@ type GitRepo struct {
 
 func Find(template GitRepo, repos []GitRepo) *GitRepo {
 	for i, repo := range repos {
-		if (template.Path == "" || repo.Path == template.Path) &&
-			(template.URL == "" || repo.URL == template.URL) &&
+		if (template.URL == "" || repo.URL == template.URL) &&
 			(template.Branch == "" || repo.Branch == template.Branch) &&
-			(template.Commit == "" || repo.Commit == template.Commit) &&
-			(template.Name == "" || repo.Name == template.Name) {
+			(template.Commit == "" || repo.Commit == template.Commit) {
 			return &repos[i] // Return a pointer to the actual slice element
 		}
 	}
@@ -46,6 +44,8 @@ func getRepository(repoDir string) (GitRepo, error) {
 		}
 		return repo, err
 	}
+
+	repo.Path = repoDir
 
 	// Fetch Repository URL
 	url, err := getRepoURL(configPath)

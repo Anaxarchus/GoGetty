@@ -5,7 +5,9 @@ import (
 	"gogetty/pkg/cache"
 	"gogetty/pkg/gitop"
 	"gogetty/pkg/project"
+	"gogetty/pkg/symlink"
 	"os"
+	"path/filepath"
 )
 
 type App interface {
@@ -16,6 +18,7 @@ type App interface {
 	Update(name, branch, commit string, directories []string) error
 	List() ([]project.Dependency, error)
 	Clean() error
+	ListModuleNames() ([]string, error)
 }
 
 type MyApp struct {
@@ -104,34 +107,76 @@ func (m *MyApp) Remove(name string) error {
 }
 
 func (m *MyApp) Fetch() error {
-	err := ValidateEnvironment()
-	if err != nil {
-		return err
-	}
-	err = project.Validate("")
-	if err != nil {
+	// Validate the environment
+	if err := ValidateEnvironment(); err != nil {
 		return err
 	}
 
-	return fetchRecursive(m.ProjectDir, m.Cache)
+	// Validate the project
+	if err := project.Validate(""); err != nil {
+		return err
+	}
+
+	// Get the project file
+	proj, projErr := project.GetProjectFile(m.ProjectDir)
+	if projErr != nil {
+		return projErr
+	}
+
+	// Determine the target directory
+	targetDir := filepath.Join(m.ProjectDir, proj.ModulesDir)
+
+	// Check if targetDir exists and delete it if it does
+	if _, err := os.Stat(targetDir); !os.IsNotExist(err) {
+		if err := os.RemoveAll(targetDir); err != nil {
+			return fmt.Errorf("failed to remove existing target directory: %w", err)
+		}
+	}
+
+	if len(proj.Dependencies) == 0 {
+		return nil
+	}
+
+	// Perform recursive fetch
+	if err := fetchRecursive(m.ProjectDir, m.Cache); err != nil {
+		return err
+	}
+
+	// Write a warning file after successful fetching
+	if err := symlink.WriteReadmeWithWarning(targetDir); err != nil {
+		return fmt.Errorf("failed to write warning file: %w", err)
+	}
+
+	return nil
 }
 
-func (m *MyApp) List() ([]project.Dependency, error) {
+func (m *MyApp) List() error {
 	err := ValidateEnvironment()
 	if err != nil {
-		return []project.Dependency{}, err
+		return err
 	}
+
 	err = project.Validate("")
 	if err != nil {
-		return []project.Dependency{}, err
+		return err
 	}
 
 	proj, err := project.GetProjectFile("")
 	if err != nil {
-		return []project.Dependency{}, err
+		return err
 	}
 
-	return proj.Dependencies, nil
+	// Check dependencies and print them
+	if len(proj.Dependencies) == 0 {
+		fmt.Println("No dependencies found.")
+		return nil
+	}
+
+	fmt.Println("Dependencies:")
+	for _, dep := range proj.Dependencies {
+		printDependency(dep)
+	}
+	return nil
 }
 
 func (m *MyApp) Clean() error {
@@ -191,4 +236,14 @@ func (m *MyApp) Clean() error {
 	}
 
 	return nil
+}
+
+func (m *MyApp) ListModuleNames() ([]string, error) {
+	var moduleNames []string
+	for _, repo := range m.Cache {
+		if repo.Name != "" {
+			moduleNames = append(moduleNames, repo.Name)
+		}
+	}
+	return moduleNames, nil
 }
