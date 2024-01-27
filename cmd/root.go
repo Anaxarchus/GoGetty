@@ -6,6 +6,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Declare flags at the package level
+var (
+	branchFlag     string
+	commitFlag     string
+	directoryFlags []string
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "gogetty",
 	Short: "GoGetty is a versatile dependency manager for projects using Git repositories.",
