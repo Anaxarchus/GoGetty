@@ -9,11 +9,11 @@ import (
 	"strings"
 )
 
-func Fetch(cacheDir, gitURL, branch, commit string) (GitRepo, error) {
+func Fetch(cacheDir, gitURL, branch, commit string) (*GitRepo, error) {
 	// Derive the name from the gitURL
 	parsedURL, err := url.Parse(gitURL)
 	if err != nil {
-		return GitRepo{}, err
+		return &GitRepo{}, err
 	}
 
 	// Extract the repository name from the URL
@@ -24,7 +24,7 @@ func Fetch(cacheDir, gitURL, branch, commit string) (GitRepo, error) {
 	name = strings.TrimSuffix(name, ".bundle") // Add more extensions if needed
 
 	if name == "." || name == "/" {
-		return GitRepo{}, fmt.Errorf("invalid gitURL: %s", gitURL)
+		return &GitRepo{}, fmt.Errorf("invalid gitURL: %s", gitURL)
 	}
 
 	// Append the name to the cacheDir
@@ -40,7 +40,7 @@ func Fetch(cacheDir, gitURL, branch, commit string) (GitRepo, error) {
 
 	// Run the command and handle errors
 	if err := cmd.Run(); err != nil {
-		return GitRepo{}, err
+		return &GitRepo{}, err
 	}
 
 	// Create and populate a GitRepo object
@@ -52,7 +52,9 @@ func Fetch(cacheDir, gitURL, branch, commit string) (GitRepo, error) {
 		Name:   name,
 	}
 
-	return repo, nil
+	fmt.Printf("repo fetched: %v\n", repo)
+
+	return &repo, nil
 }
 
 func constructFetchCommand(gitURL, branch, commit, cacheDir string) string {

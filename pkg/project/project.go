@@ -81,7 +81,6 @@ func AddDependency(repo gitop.GitRepo, directories []string) error {
 		Repository:  repo,
 		Directories: directories,
 	}
-	fmt.Println("repo: ", repo)
 
 	updated := false
 	for i, dep := range project.Dependencies {

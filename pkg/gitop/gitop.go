@@ -18,13 +18,13 @@ type GitRepo struct {
 }
 
 func Find(template GitRepo, repos []GitRepo) *GitRepo {
-	for _, repo := range repos {
+	for i, repo := range repos {
 		if (template.Path == "" || repo.Path == template.Path) &&
 			(template.URL == "" || repo.URL == template.URL) &&
 			(template.Branch == "" || repo.Branch == template.Branch) &&
 			(template.Commit == "" || repo.Commit == template.Commit) &&
 			(template.Name == "" || repo.Name == template.Name) {
-			return &repo // Return a pointer to the matching GitRepo
+			return &repos[i] // Return a pointer to the actual slice element
 		}
 	}
 	return nil // Return nil if no matching GitRepo is found

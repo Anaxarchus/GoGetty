@@ -1,0 +1,15 @@
+{
+  "modules": [
+    {
+      "repository": {
+        "Path": "/home/sam/.gogetty/modules/gogettyTest",
+        "URL": "ssh://git@bitbroslabs.net:5922/Zero/gogettyTest.git",
+        "Branch": "",
+        "Commit": "",
+        "Name": "gogettyTest"
+      },
+      "directories": null
+    }
+  ],
+  "modulesDirectory": "modules"
+}

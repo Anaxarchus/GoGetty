@@ -11,13 +11,15 @@ import (
 )
 
 func fetchRecursive(projectDir string, modules []gitop.GitRepo) error {
-	err := project.Validate("")
+	err := project.Validate(projectDir)
 	if err != nil {
+		fmt.Printf("Validation failed: %v\n", err)
 		return err
 	}
 
-	proj, err := project.GetProjectFile("")
+	proj, err := project.GetProjectFile(projectDir)
 	if err != nil {
+		fmt.Printf("Error getting project file: %v\n", err)
 		return err
 	}
 
@@ -26,13 +28,15 @@ func fetchRecursive(projectDir string, modules []gitop.GitRepo) error {
 	for _, dep := range proj.Dependencies {
 		repo := gitop.Find(dep.Repository, modules)
 		if repo == nil {
-			repo, fetchErr := gitop.Fetch(cache.ModuleDir(), dep.Repository.URL, dep.Repository.Branch, dep.Repository.Commit)
-			if fetchErr != nil {
-				allErrors = append(allErrors, fetchErr)
+			repo, err = gitop.Fetch(cache.ModuleDir(), dep.Repository.URL, dep.Repository.Branch, dep.Repository.Commit)
+			if err != nil {
+				if !os.IsNotExist(err) {
+					allErrors = append(allErrors, err)
+				}
 				continue
 			}
 
-			if err := fetchRecursive(repo.Path, modules); err != nil {
+			if err = fetchRecursive(repo.Path, modules); err != nil {
 				allErrors = append(allErrors, err)
 			}
 		}
@@ -64,7 +68,7 @@ func fetchRecursive(projectDir string, modules []gitop.GitRepo) error {
 // ensureDir checks if a directory exists, and if not, creates it
 func ensureDir(dirName string) error {
 	if _, err := os.Stat(dirName); os.IsNotExist(err) {
-		return os.MkdirAll(dirName, 0755) // or an appropriate permission as required
+		return os.MkdirAll(dirName, 0755)
 	}
 	return nil
 }
