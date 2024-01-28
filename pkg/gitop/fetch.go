@@ -55,11 +55,13 @@ func Fetch(cacheDir, gitURL, branch, commit string) (*GitRepo, error) {
 
 	godotProject, err := godot.GetGodotProject(fullCacheDir)
 	if err != nil {
+		fmt.Printf("Error while getting godot project: %v\n", err)
 		return &repo, nil
 	}
 
 	err = godot.UpdateProjectPaths(*godotProject)
 	if err != nil {
+		fmt.Printf("Error while updating project paths: %v\n", err)
 		return &repo, nil
 	}
 

@@ -63,7 +63,9 @@ func getUserDirPath(dirName string) string {
 }
 
 func UpdateProjectPaths(project GodotProject) error {
+	fmt.Println("parsing godot scripts")
 	for _, script := range project.Scripts {
+		fmt.Printf("parsing: %v\n", script)
 		err := parseScriptPaths(&script, project)
 		if err != nil {
 			fmt.Println("Godot Script failed to parse: ", filepath.Base(script.Path))
@@ -73,13 +75,16 @@ func UpdateProjectPaths(project GodotProject) error {
 }
 
 func GetGodotProject(dirPath string) (*GodotProject, error) {
+	fmt.Println("Getting godot project")
 	projectFilePath := filepath.Join(dirPath, "project.godot")
 	cfg, err := ini.Load(projectFilePath)
 	if err != nil {
+		fmt.Println("Failed to find project!")
 		return nil, err
 	}
 
 	var godotProject GodotProject
+	godotProject.Path = dirPath
 
 	// Extract values with default handling
 	if name, err := cfg.Section("application").GetKey("config/name"); err == nil {
@@ -106,6 +111,7 @@ func GetGodotProject(dirPath string) (*GodotProject, error) {
 	// Append the script lists to the GodotProject's Scripts field
 	godotProject.Scripts = append(godotProject.Scripts, gdScripts...)
 	godotProject.Scripts = append(godotProject.Scripts, csScripts...)
+	fmt.Printf("Project found and parsed: %v\n", godotProject)
 
 	return &godotProject, nil
 }
