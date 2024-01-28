@@ -116,9 +116,9 @@ func getCurrentBranch(headPath string) (string, error) {
 }
 
 // Ignore appends multiple ignoreStrings to the .gitignore file in the specified GitRepo.
-func Ignore(repo GitRepo, ignoreStrings ...string) error {
+func Ignore(repoDir string, ignoreStrings ...string) error {
 	// Construct the path to the .gitignore file in the repository
-	gitignorePath := filepath.Join(repo.Path, ".gitignore")
+	gitignorePath := filepath.Join(repoDir, ".gitignore")
 
 	// Open existing .gitignore file or create a new one
 	file, err := os.OpenFile(gitignorePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -142,6 +142,65 @@ func Ignore(repo GitRepo, ignoreStrings ...string) error {
 
 		// Append the ignoreString
 		if _, err = file.WriteString("\n" + ignoreString); err != nil {
+			return fmt.Errorf("error writing to .gitignore file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// RemoveIgnore removes specified ignoreStrings from the .gitignore file in the specified GitRepo.
+func RemoveIgnore(repoDir string, ignoreStrings ...string) error {
+	// Construct the path to the .gitignore file in the repository
+	gitignorePath := filepath.Join(repoDir, ".gitignore")
+
+	// Open the .gitignore file for reading
+	file, err := os.OpenFile(gitignorePath, os.O_RDWR, 0644)
+	if err != nil {
+		return fmt.Errorf("error opening .gitignore file: %w", err)
+	}
+	defer file.Close()
+
+	// Create a scanner to read the file line by line
+	scanner := bufio.NewScanner(file)
+	var updatedLines []string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check if the line matches any of the ignoreStrings
+		shouldRemove := false
+		for _, ignoreString := range ignoreStrings {
+			if line == ignoreString {
+				shouldRemove = true
+				break
+			}
+		}
+
+		// If the line should not be removed, keep it in the updatedLines slice
+		if !shouldRemove {
+			updatedLines = append(updatedLines, line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading .gitignore file: %w", err)
+	}
+
+	// Close the file and reopen it for writing, truncating its content
+	file.Close()
+
+	// Reopen the .gitignore file for writing, truncating its content
+	file, err = os.Create(gitignorePath)
+	if err != nil {
+		return fmt.Errorf("error creating .gitignore file: %w", err)
+	}
+	defer file.Close()
+
+	// Write the updated lines back to the .gitignore file
+	for _, line := range updatedLines {
+		_, err := file.WriteString(line + "\n")
+		if err != nil {
 			return fmt.Errorf("error writing to .gitignore file: %w", err)
 		}
 	}

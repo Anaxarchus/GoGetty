@@ -12,6 +12,8 @@ var fetchCmd = &cobra.Command{
 	Long:  "Fetch all dependencies defined in your project",
 	Run: func(cmd *cobra.Command, args []string) {
 		myApp := getApp()
+
+		// Perform the fetch operation
 		if err := myApp.Fetch(); err != nil {
 			fmt.Println("Error:", err)
 		} else {
