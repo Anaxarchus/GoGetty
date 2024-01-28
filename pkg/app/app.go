@@ -18,7 +18,6 @@ type App interface {
 	Update(name, branch, commit string, directories []string) error
 	List() ([]project.Dependency, error)
 	Clean() error
-	ListModuleNames() ([]string, error)
 }
 
 type MyApp struct {
@@ -41,6 +40,7 @@ func (m *MyApp) Init() error {
 	}
 
 	cache.AddClient(m.ProjectDir)
+
 	return nil
 }
 
@@ -133,8 +133,17 @@ func (m *MyApp) Fetch() error {
 		}
 	}
 
+	proj, err := project.GetProjectFile("")
+
 	if len(proj.Dependencies) == 0 {
+		if err == nil {
+			gitop.RemoveIgnore(m.ProjectDir, proj.ModulesDir)
+		}
 		return nil
+	} else {
+		if err == nil {
+			gitop.Ignore(m.ProjectDir, proj.ModulesDir)
+		}
 	}
 
 	// Perform recursive fetch
@@ -236,14 +245,4 @@ func (m *MyApp) Clean() error {
 	}
 
 	return nil
-}
-
-func (m *MyApp) ListModuleNames() ([]string, error) {
-	var moduleNames []string
-	for _, repo := range m.Cache {
-		if repo.Name != "" {
-			moduleNames = append(moduleNames, repo.Name)
-		}
-	}
-	return moduleNames, nil
 }

@@ -18,7 +18,6 @@ func fetchRecursive(projectDir string, modules []gitop.GitRepo) error {
 		} else {
 			return nil
 		}
-
 	}
 
 	proj, err := project.GetProjectFile(projectDir)
@@ -28,7 +27,6 @@ func fetchRecursive(projectDir string, modules []gitop.GitRepo) error {
 		} else {
 			return nil
 		}
-
 	}
 
 	var allErrors []error

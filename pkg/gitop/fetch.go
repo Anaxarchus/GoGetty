@@ -2,6 +2,7 @@ package gitop
 
 import (
 	"fmt"
+	"gogetty/pkg/godot"
 	"net/url"
 	"os/exec"
 	"path"
@@ -52,7 +53,15 @@ func Fetch(cacheDir, gitURL, branch, commit string) (*GitRepo, error) {
 		Name:   name,
 	}
 
-	fmt.Printf("repo fetched: %v\n", repo)
+	godotProject, err := godot.GetGodotProject(fullCacheDir)
+	if err != nil {
+		return &repo, nil
+	}
+
+	err = godot.UpdateProjectPaths(*godotProject)
+	if err != nil {
+		return &repo, nil
+	}
 
 	return &repo, nil
 }
