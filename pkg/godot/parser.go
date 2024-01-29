@@ -49,10 +49,10 @@ func parseScriptPaths(script *GodotScript, project GodotProject) error {
 		line := scanner.Text()
 
 		// Replace "res://" paths with projectDir
-		line = strings.ReplaceAll(line, "res://", project.Path)
+		line = strings.ReplaceAll(line, "res:/", project.Path)
 
 		// Replace "user://" paths with the UserDirectory
-		line = strings.ReplaceAll(line, "user://", project.UserDirectory)
+		line = strings.ReplaceAll(line, "user:/", project.UserDirectory)
 
 		// Append the modified line to the result
 		modifiedLines = append(modifiedLines, line)
