@@ -2,6 +2,7 @@ package godot
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -114,4 +115,26 @@ func GetGodotProject(dirPath string) (*GodotProject, error) {
 	fmt.Printf("Project found and parsed: %v\n", godotProject)
 
 	return &godotProject, nil
+}
+
+// RemoveProjectFile deletes the 'godot.project' file in the specified directory.
+func RemoveProjectFile(projectDir string) error {
+	projectFilePath := filepath.Join(projectDir, "godot.project")
+
+	// Check if the file exists
+	if _, err := os.Stat(projectFilePath); os.IsNotExist(err) {
+		// The file does not exist
+		return fmt.Errorf("godot.project file does not exist in the directory: %s", projectDir)
+	} else if err != nil {
+		// Some other error occurred while checking the file
+		return fmt.Errorf("error checking for godot.project file: %v", err)
+	}
+
+	// Delete the file
+	err := os.Remove(projectFilePath)
+	if err != nil {
+		return fmt.Errorf("error deleting godot.project file: %v", err)
+	}
+
+	return nil
 }

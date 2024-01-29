@@ -1,11 +1,11 @@
-package gitop
+package gitwrap
 
 import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 )
 
@@ -17,102 +17,44 @@ type GitRepo struct {
 	Name   string // Name derived from URL
 }
 
-func Find(template GitRepo, repos []GitRepo) *GitRepo {
-	for i, repo := range repos {
-		if (template.URL == "" || repo.URL == template.URL) &&
-			(template.Branch == "" || repo.Branch == template.Branch) &&
-			(template.Commit == "" || repo.Commit == template.Commit) {
-			return &repos[i] // Return a pointer to the actual slice element
+// AssumeUnchanged marks a file as "assume-unchanged" in a given directory
+func AssumeUnchanged(dirPath, fileName string) error {
+	// Construct the full path to the file
+	fullPath := filepath.Join(dirPath, fileName)
+
+	// Construct and execute the git update-index --assume-unchanged command
+	cmd := exec.Command("git", "update-index", "--assume-unchanged", fullPath)
+
+	// Set the working directory
+	cmd.Dir = dirPath
+
+	// Execute the command
+	_, err := cmd.CombinedOutput()
+	return err
+}
+
+// Forward executes a given git command with parameters in the specified path
+func Forward(path, gitCommand string, params ...string) error {
+	// Create the full command slice
+	commandArgs := append([]string{gitCommand}, params...)
+	cmd := exec.Command("git", commandArgs...)
+
+	// Set the working directory if a path is provided
+	if path != "" {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return err
 		}
-	}
-	return nil // Return nil if no matching GitRepo is found
-}
-
-func getRepository(repoDir string) (GitRepo, error) {
-	var repo GitRepo
-
-	// Define common paths
-	gitDir := filepath.Join(repoDir, ".git")
-	configPath := filepath.Join(gitDir, "config")
-	headPath := filepath.Join(gitDir, "HEAD")
-	shallowPath := filepath.Join(gitDir, "shallow")
-
-	// Check if .git directory exists to validate the Git repository
-	if _, err := os.Stat(gitDir); err != nil {
-		if os.IsNotExist(err) {
-			return repo, fmt.Errorf("not a valid Git repository: %s", repoDir)
-		}
-		return repo, err
+		cmd.Dir = absPath
 	}
 
-	repo.Path = repoDir
+	// Set the output to be written to the console
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	// Fetch Repository URL
-	url, err := getRepoURL(configPath)
-	if err != nil {
-		return repo, fmt.Errorf("error fetching repository URL: %v", err)
-	}
-	repo.URL = strings.TrimSpace(url)
-	repo.Name = strings.TrimSpace(GetNameFromURL(url))
-
-	// Fetch Current Branch
-	branch, err := getCurrentBranch(headPath)
-	if err != nil {
-		return repo, fmt.Errorf("error fetching current branch: %v", err)
-	}
-	repo.Branch = strings.TrimSpace(branch)
-
-	// Fetch Latest Commit
-	commit, err := os.ReadFile(shallowPath)
-	if err != nil {
-		debug.PrintStack()
-		return repo, fmt.Errorf("error fetching latest commit: %v", err)
-	}
-	repo.Commit = strings.TrimSpace(string(commit))
-
-	return repo, nil
-}
-
-func GetNameFromURL(gitURL string) string {
-	urlParts := strings.Split(gitURL, "/")
-	lastPart := urlParts[len(urlParts)-1]
-	return strings.TrimSuffix(lastPart, ".git")
-}
-
-func getRepoURL(configPath string) (string, error) {
-	file, err := os.Open(configPath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "url =") {
-			parts := strings.Split(line, "=")
-			if len(parts) == 2 {
-				return strings.TrimSpace(parts[1]), nil
-			}
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-	return "", fmt.Errorf("repository URL not found in git config")
-}
-
-func getCurrentBranch(headPath string) (string, error) {
-	data, err := os.ReadFile(headPath)
-	if err != nil {
-		return "", err
-	}
-	// Example content: "ref: refs/heads/main"
-	if strings.HasPrefix(string(data), "ref: ") {
-		parts := strings.Split(string(data), "/")
-		return parts[len(parts)-1], nil
-	}
-	return "", fmt.Errorf("current branch not found")
+	// Execute the command
+	err := cmd.Run()
+	return err
 }
 
 // Ignore appends multiple ignoreStrings to the .gitignore file in the specified GitRepo.

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const symlinkWarning = `Welcome to your GoGetty-managed directory!
@@ -16,20 +17,38 @@ loss.
 Thanks for using GoGetty!`
 
 func CreateSymlink(source, target string) error {
+	// Resolve absolute paths
+	absSource, err := filepath.Abs(source)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path for source '%s': %v", source, err)
+	}
+	absTarget, err := filepath.Abs(target)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path for target '%s': %v", target, err)
+	}
+
+	// Check for recursive symlink
+	if absSource == absTarget {
+		return fmt.Errorf("cannot create symlink: source and target are the same")
+	}
+	if strings.HasPrefix(absTarget, absSource+string(os.PathSeparator)) {
+		return fmt.Errorf("cannot create recursive symlink")
+	}
+
 	// Create the parent directory of the target path
-	parentDir := filepath.Dir(target)
+	parentDir := filepath.Dir(absTarget)
 	if err := os.MkdirAll(parentDir, 0755); err != nil {
 		return fmt.Errorf("failed to create parent directory '%s': %v", parentDir, err)
 	}
 
 	// Remove existing symlink/file if it exists
-	if _, err := os.Lstat(target); err == nil {
-		if err := os.Remove(target); err != nil {
+	if _, err := os.Lstat(absTarget); err == nil {
+		if err := os.Remove(absTarget); err != nil {
 			return err
 		}
 	}
 
-	return os.Symlink(source, target)
+	return os.Symlink(absSource, absTarget)
 }
 
 func CreateSymlinkBundle(sourceBase, targetBase string, subDirs []string) error {
@@ -48,7 +67,7 @@ func CreateSymlinkBundle(sourceBase, targetBase string, subDirs []string) error 
 }
 
 func WriteReadmeWithWarning(targetBase string) error {
-	readmePath := filepath.Join(targetBase, "WARNING.md")
+	readmePath := filepath.Join(targetBase, "WARN.md")
 
 	// Check if README already exists
 	if _, err := os.Stat(readmePath); err == nil {

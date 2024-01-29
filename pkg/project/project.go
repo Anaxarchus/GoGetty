@@ -3,7 +3,7 @@ package project
 import (
 	"encoding/json"
 	"fmt"
-	"gogetty/pkg/gitop"
+	"gogetty/pkg/gitwrap"
 	"os"
 	"path/filepath"
 )
@@ -14,8 +14,8 @@ type Project struct {
 }
 
 type Dependency struct {
-	Repository  gitop.GitRepo `json:"repository"`
-	Directories []string      `json:"directories"`
+	Repository  gitwrap.GitRepo `json:"repository"`
+	Directories []string        `json:"directories"`
 }
 
 const ProjectJson = ".gogetty"
@@ -71,7 +71,7 @@ func UpdateDependency(old_dependency Dependency, new_dependency Dependency) erro
 	return writeProject("", project)
 }
 
-func AddDependency(repo gitop.GitRepo, directories []string) error {
+func AddDependency(repo gitwrap.GitRepo, directories []string) error {
 	project, err := readProject("")
 	if err != nil {
 		return err

@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 	"gogetty/pkg/cache"
-	"gogetty/pkg/gitop"
+	"gogetty/pkg/gitwrap"
 	"gogetty/pkg/project"
 	"gogetty/pkg/symlink"
 	"os"
@@ -18,11 +18,12 @@ type App interface {
 	Update(name, branch, commit string, directories []string) error
 	List() ([]project.Dependency, error)
 	Clean() error
+	GetModuleList() []string
 }
 
 type MyApp struct {
 	ProjectDir string
-	Cache      []gitop.GitRepo
+	Cache      []gitwrap.GitRepo
 }
 
 func (m *MyApp) Init() error {
@@ -54,7 +55,7 @@ func (m *MyApp) Add(url, branch, commit string, directories []string) error {
 		return err
 	}
 
-	repo := gitop.GitRepo{
+	repo := gitwrap.GitRepo{
 		URL:    url,
 		Branch: branch,
 		Commit: commit,
@@ -73,7 +74,7 @@ func (m *MyApp) Update(name, branch, commit string, directories []string) error 
 		return err
 	}
 
-	repo := gitop.GitRepo{
+	repo := gitwrap.GitRepo{
 		Name:   name,
 		Branch: branch,
 		Commit: commit,
@@ -137,12 +138,12 @@ func (m *MyApp) Fetch() error {
 
 	if len(proj.Dependencies) == 0 {
 		if err == nil {
-			gitop.RemoveIgnore(m.ProjectDir, proj.ModulesDir)
+			gitwrap.RemoveIgnore(m.ProjectDir, proj.ModulesDir)
 		}
 		return nil
 	} else {
 		if err == nil {
-			gitop.Ignore(m.ProjectDir, proj.ModulesDir)
+			gitwrap.Ignore(m.ProjectDir, proj.ModulesDir)
 		}
 	}
 
@@ -245,4 +246,12 @@ func (m *MyApp) Clean() error {
 	}
 
 	return nil
+}
+
+func (m *MyApp) GetModuleList() []string {
+	strings := []string{}
+	for _, mod := range m.Cache {
+		strings = append(strings, mod.Name)
+	}
+	return strings
 }

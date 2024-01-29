@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gogetty/pkg/app"
 	"gogetty/pkg/cache"
-	"gogetty/pkg/gitop"
+	"gogetty/pkg/gitwrap"
 	"os"
 )
 
@@ -15,7 +15,7 @@ func getApp() *app.MyApp {
 		fmt.Println("Error getting working directory:", wdErr)
 		return nil
 	}
-	modules, err := gitop.Scan(cache.ModuleDir())
+	modules, err := gitwrap.Scan(cache.ModuleDir())
 	if err != nil {
 		fmt.Println("Error:", err)
 		return nil
